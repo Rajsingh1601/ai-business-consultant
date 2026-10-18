@@ -308,23 +308,24 @@ export class AIManagerService {
    */
   validateAndReconcileReports(
     context: BusinessContext,
-    reports: { research: AgentResult; marketing?: AgentResult | null; finance?: AgentResult | null }
+    reports: { research?: AgentResult | null; marketing?: AgentResult | null; finance?: AgentResult | null }
   ): { isValid: boolean; reconciliationNotes: string[]; warnings: string[] } {
     const notes: string[] = [];
     const warnings: string[] = [];
 
-    // Verify Research Specialist result exists and succeeded
-    if (!reports.research || reports.research.status !== 'success') {
-      warnings.push('Research Specialist report is incomplete or missing.');
-    } else {
+    const hasResearch = !!(reports.research && reports.research.status === 'success');
+    if (hasResearch) {
       notes.push(`Validated geographic alignment: Research Specialist calibrated for ${context.location}.`);
+    } else {
+      notes.push('Specialist Agents Queued: Research Agent is set to Waiting state (Pending Specialist Integration).');
     }
 
-    notes.push('Active Execution Mode: Research Agent executed successfully. Marketing and Finance specialist agents are queued for upcoming integration phase.');
-    notes.push('Reliability audit completed: Explicit demonstration heuristics and local factors checked.');
+    notes.push('AI Manager Orchestration Mode: AI Manager Agent active; all 4 specialist agents (Research, Marketing, Finance, Customer Support) are queued in Waiting state.');
+    notes.push(`Business parameters successfully extracted: ${context.businessName || context.businessType} in ${context.location}.`);
+    notes.push('Consultation tasks prepared with clean adapter interfaces ready for future specialist execution.');
 
     return {
-      isValid: warnings.length === 0,
+      isValid: true,
       reconciliationNotes: notes,
       warnings
     };
@@ -336,13 +337,14 @@ export class AIManagerService {
   synthesizeFinalReport(
     consultationId: string,
     context: BusinessContext,
-    reports: { research: AgentResult; marketing?: AgentResult | null; finance?: AgentResult | null },
+    reports: { research?: AgentResult | null; marketing?: AgentResult | null; finance?: AgentResult | null },
     validation: { isValid: boolean; reconciliationNotes: string[]; warnings: string[] }
   ): FinalBusinessReport {
     const reportId = `rep_${Date.now()}`;
     const currSym = context.initialInvestment.currency === 'INR' ? '₹' : '$';
     const currency = context.initialInvestment.currency || 'INR';
 
+    const hasResearch = !!(reports.research && reports.research.status === 'success');
     const resData = reports.research?.data || {};
     const hasMarketing = !!(reports.marketing && reports.marketing.status === 'success');
     const hasFinance = !!(reports.finance && reports.finance.status === 'success');
@@ -361,14 +363,14 @@ export class AIManagerService {
       // 1. Executive Summary
       executiveSummary: {
         status: 'completed',
-        content: `Targeted Market & Competitor Feasibility study for establishing ${context.businessType} in ${context.location}. Conducted by the Market Research Specialist Agent and reconciled by the Central AI Manager Agent. (Marketing and Finance specialist agents remain queued for subsequent integration phases).`,
+        content: `Preliminary Consultation Blueprint for establishing ${context.businessType} in ${context.location}. Orchestrated by the Central AI Manager Agent. (All four specialist agents: Research, Marketing, Finance, and Customer Support are currently queued in Waiting state pending future phase integration).`,
         keyHighlights: [
-          `Target Region: ${context.location} with localized commercial demand assessment for ${context.businessType}.`,
-          `Competitive Screening: Direct local incumbents analyzed with market opportunity gaps identified.`,
-          `Demographic Fit: Evaluated catchment density and commercial zoning accessibility.`,
-          `Specialist Status: Research Agent analysis complete. Marketing and Finance modules are queued for upcoming integration.`
+          `Target Region: ${context.location} for proposed ${context.businessType}.`,
+          `Initial Investment: ${context.initialInvestment.formatted || 'Capital to be determined'}.`,
+          `AI Manager Role: Structured consultation tasks, validated business constraints, and established blueprint.`,
+          `Specialist Status: Research, Marketing, Finance, and Customer Support agents are currently in Waiting state pending specialist integration.`
         ],
-        isMock: true
+        isMock: false
       },
 
       // 2. Business Idea and Objectives
@@ -381,22 +383,26 @@ export class AIManagerService {
 
       // 3. Location and Market Research
       locationAndMarketResearch: {
-        status: 'completed',
-        content: resData.locationSummary || `Market research indicates positive commercial conditions in ${context.location}.`,
-        locationSummary: resData.locationSummary || `Strategic location in ${context.location}.`,
-        marketDemand: resData.marketDemand || 'Active local demand driven by demographic density and commercial foot traffic.',
-        localDemographics: resData.localDemographics || 'Diverse urban demographic seeking quality alternatives.',
-        footTrafficAndZoning: resData.footTrafficAndZoning || 'Commercial permits and municipal clearances required.',
-        dataSources: resData.dataSources || ['Demonstration Regional Modeling'],
-        provenance: 'demonstration_mock'
+        status: hasResearch ? 'completed' : 'pending',
+        content: hasResearch 
+          ? (resData.locationSummary || `Market research indicates positive commercial conditions in ${context.location}.`)
+          : 'Pending Specialist Agent Integration: Detailed local footfall, commercial zoning, and regional demand analysis will be generated once the Research Agent is active.',
+        locationSummary: hasResearch ? (resData.locationSummary || `Strategic location in ${context.location}.`) : 'Pending Research Agent.',
+        marketDemand: hasResearch ? (resData.marketDemand || 'Active local demand.') : 'Pending Research Agent.',
+        localDemographics: hasResearch ? (resData.localDemographics || 'Diverse demographic.') : 'Pending Research Agent.',
+        footTrafficAndZoning: hasResearch ? (resData.footTrafficAndZoning || 'Commercial clearances required.') : 'Pending Research Agent.',
+        dataSources: hasResearch ? (resData.dataSources || ['Demonstration Regional Modeling']) : ['Pending Integration'],
+        provenance: hasResearch ? 'demonstration_mock' : 'needs_validation'
       },
 
       // 4. Competitor Analysis
       competitorAnalysis: {
-        status: 'completed',
-        content: `Evaluation of incumbent and emerging competitors operating in ${context.location}. The competitive landscape shows a gap between legacy operators and modern customer expectations.`,
-        directCompetitors: resData.directCompetitors || [],
-        marketOpportunity: resData.marketOpportunity || 'High differentiation potential through customer-centric reliability and modern operational standards.'
+        status: hasResearch ? 'completed' : 'pending',
+        content: hasResearch
+          ? `Evaluation of incumbent and emerging competitors operating in ${context.location}. The competitive landscape shows a gap between legacy operators and modern customer expectations.`
+          : 'Pending Specialist Agent Integration: Incumbent competitor screening and market gap identification will be generated once the Research Agent is active.',
+        directCompetitors: hasResearch ? (resData.directCompetitors || []) : [],
+        marketOpportunity: hasResearch ? (resData.marketOpportunity || 'High differentiation potential.') : 'Pending Research Agent.'
       },
 
       // 5. Target Audience

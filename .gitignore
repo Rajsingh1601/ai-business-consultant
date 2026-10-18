@@ -29,3 +29,5 @@ reports/*.pdf
 .idea/
 .DS_Store
 Thumbs.db
+cloudflared.exe
+start_server_and_tunnel.bat

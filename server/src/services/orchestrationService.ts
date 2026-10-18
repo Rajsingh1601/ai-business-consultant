@@ -98,50 +98,44 @@ export class OrchestrationService extends EventEmitter {
       }
     }
 
-    // 2. Stage 2: AI Manager Coordinating Active Specialist Agent (Research Agent Only)
+    // Update specialist task IDs in dashboard
+    for (const task of plan.tasks) {
+      task.status = 'Waiting';
+      if (task.agentId === 'research') {
+        conv.dashboardState.research = { status: 'Waiting', taskId: task.taskId, lastUpdated: new Date().toISOString(), error: null };
+      } else if (task.agentId === 'marketing') {
+        conv.dashboardState.marketing = { status: 'Waiting', taskId: task.taskId, lastUpdated: new Date().toISOString(), error: null };
+      } else if (task.agentId === 'finance') {
+        conv.dashboardState.finance = { status: 'Waiting', taskId: task.taskId, lastUpdated: new Date().toISOString(), error: null };
+      }
+    }
+    conv.dashboardState.customerSupport = {
+      status: 'Waiting',
+      lastUpdated: new Date().toISOString(),
+      error: null
+    };
+
+    // 2. Stage 2: AI Manager Coordinating (All 4 specialist agents in Waiting state)
     conv.dashboardState.manager = {
       status: 'Coordinating',
-      currentAction: 'Dispatching task to Market Research Specialist Agent (Marketing & Finance queued for upcoming phase)',
+      currentAction: 'Tasks queued for all 4 agents (Research, Marketing, Finance, and Customer Support in Waiting state)',
       lastUpdated: new Date().toISOString()
     };
     await storage.saveConversation(conv);
     this.emit('update', { conversationId, state: conv.dashboardState });
-
-    // Execute only Research Agent (User configured: only Research Agent works for now)
-    const researchTask = plan.tasks.find((t) => t.agentId === 'research');
-    if (!researchTask) {
-      throw new Error('Research Agent task not found in consultation plan');
-    }
-
-    await this.executeSpecialistTask(conv, researchTask);
-
-    // Save state after execution
-    await storage.saveConversation(conv);
-
-    // Check if Research task failed
-    if (researchTask.status === 'Failed') {
-      conv.dashboardState.manager = {
-        status: 'Failed',
-        currentAction: 'Research Agent encountered an error. Ready for targeted retry.',
-        lastUpdated: new Date().toISOString()
-      };
-      await storage.saveConversation(conv);
-      this.emit('update', { conversationId, state: conv.dashboardState });
-      return conv;
-    }
 
     // 3. Stage 3: AI Manager Reviewing & Reconciling
     conv.dashboardState.manager = {
       status: 'Reviewing',
-      currentAction: 'Auditing Market Research findings, checking local demographics, and preparing report',
+      currentAction: 'Reconciling consultation blueprint and structuring business context',
       lastUpdated: new Date().toISOString()
     };
     await storage.saveConversation(conv);
     this.emit('update', { conversationId, state: conv.dashboardState });
 
-    // Results Map with completed Research Agent output
+    // Results Map with pending specialist outputs
     const resultsMap = {
-      research: researchTask.output!,
+      research: null,
       marketing: null,
       finance: null
     };
@@ -154,54 +148,17 @@ export class OrchestrationService extends EventEmitter {
     conv.finalReport = finalReport;
     plan.status = 'completed';
 
-    // 4. Stage 4: Handoff to Customer Support Agent for PDF Generation
-    conv.dashboardState.manager = {
-      status: 'Reviewing',
-      currentAction: 'Handing off finalized research report to Customer Support Agent for PDF compilation',
-      lastUpdated: new Date().toISOString()
-    };
+    // 4. Customer Support Agent remains in Waiting state
     conv.dashboardState.customerSupport = {
-      status: 'Generating PDF',
+      status: 'Waiting',
       lastUpdated: new Date().toISOString(),
       error: null
     };
-    await storage.saveConversation(conv);
-    this.emit('update', { conversationId, state: conv.dashboardState });
-
-    try {
-      const pdfResult = await this.customerSupportAdapter.generateReport(finalReport);
-      finalReport.pdfExport = {
-        status: 'Completed',
-        fileName: pdfResult.fileName,
-        filePath: pdfResult.filePath,
-        downloadUrl: pdfResult.downloadUrl,
-        fileSizeBytes: pdfResult.fileSizeBytes,
-        generatedAt: pdfResult.generatedAt,
-        error: null
-      };
-      conv.dashboardState.customerSupport = {
-        status: 'Completed',
-        lastUpdated: new Date().toISOString(),
-        pdfUrl: pdfResult.downloadUrl,
-        error: null
-      };
-    } catch (pdfErr: any) {
-      console.error('[Orchestration] Customer Support PDF generation failed:', pdfErr);
-      finalReport.pdfExport = {
-        status: 'Failed',
-        error: pdfErr.message || 'Failed to generate PDF'
-      };
-      conv.dashboardState.customerSupport = {
-        status: 'Failed',
-        lastUpdated: new Date().toISOString(),
-        error: pdfErr.message || 'PDF Generation failed'
-      };
-    }
 
     // 5. AI Manager Workflow Completed
     conv.dashboardState.manager = {
       status: 'Completed',
-      currentAction: 'Consultation synthesis and documentation finalized successfully',
+      currentAction: 'Consultation blueprint and task orchestration finalized. All 4 specialist agents in Waiting state.',
       lastUpdated: new Date().toISOString()
     };
 
@@ -209,7 +166,7 @@ export class OrchestrationService extends EventEmitter {
     const assistantMessage: Message = {
       id: `msg_${Date.now()}`,
       role: 'assistant',
-      content: `I have completed the multi-agent consultation and feasibility study for **${context.businessName}**!\n\nAll three specialist agents (Market Research, Marketing Strategy, and Finance) have completed their analyses, and the reports have been reconciled and synthesized into your standardized 12-section business plan.\n\nYour downloadable PDF report has been generated by the Customer Support Agent and is ready for review.`,
+      content: `I have analyzed your business idea and prepared the structured consultation blueprint for **${context.businessName}**!\n\nAs configured, the **Central AI Manager Agent** has orchestrated your consultation, formulated the consultation plan, and prepared separate task instructions.\n\nAll four specialist agents (**Research Agent**, **Marketing Agent**, **Finance Agent**, and **Customer Support Agent**) are currently in **Waiting** state pending specialist integration.\n\nYou can review your extracted business parameters and the preliminary 12-section consultation structure below.`,
       timestamp: new Date().toISOString(),
       meta: {
         type: 'report_generated',

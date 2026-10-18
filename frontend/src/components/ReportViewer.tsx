@@ -79,7 +79,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) =
           ) : (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs border border-slate-200 dark:border-slate-700">
               <FileText className="w-3.5 h-3.5" />
-              <span>PDF Generation in Progress...</span>
+              <span>Customer Support Agent: Waiting (Pending Integration)</span>
             </div>
           )}
           {onClose && (
@@ -185,51 +185,76 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) =
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">3. Location and Market Research</h3>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-medium">
-                  Benchmark Synthesis
+                <span className={`text-[10px] px-2 py-0.5 rounded font-medium border ${
+                  report.locationAndMarketResearch.status === 'pending'
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                }`}>
+                  {report.locationAndMarketResearch.status === 'pending' ? 'Pending Specialist Integration' : 'Benchmark Synthesis'}
                 </span>
               </div>
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 {report.locationAndMarketResearch.content}
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <span className="font-semibold text-blue-600 dark:text-blue-400 block mb-1">Local Demographics</span>
-                  <p className="text-slate-600 dark:text-slate-300 text-xs">{report.locationAndMarketResearch.localDemographics}</p>
+              {report.locationAndMarketResearch.status === 'pending' ? (
+                <div className="p-4 rounded-xl border border-dashed border-amber-300 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 text-xs text-amber-800 dark:text-amber-300">
+                  <p className="font-semibold mb-1">Research Agent Queued in Waiting State</p>
+                  <p>Detailed localized footfall analysis, zoning permissions, and demographic modeling will be conducted when the Market Research Specialist Agent is activated.</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <span className="font-semibold text-teal-600 dark:text-teal-400 block mb-1">Foot Traffic & Zoning</span>
-                  <p className="text-slate-600 dark:text-slate-300 text-xs">{report.locationAndMarketResearch.footTrafficAndZoning}</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span className="font-semibold text-blue-600 dark:text-blue-400 block mb-1">Local Demographics</span>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs">{report.locationAndMarketResearch.localDemographics}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span className="font-semibold text-teal-600 dark:text-teal-400 block mb-1">Foot Traffic & Zoning</span>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs">{report.locationAndMarketResearch.footTrafficAndZoning}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
           {/* Section 4: Competitor Analysis */}
           {activeTab === 4 && (
             <div className="space-y-4">
-              <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">4. Competitor Analysis</h3>
+                <span className={`text-[10px] px-2 py-0.5 rounded font-medium border ${
+                  report.competitorAnalysis.status === 'pending'
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                }`}>
+                  {report.competitorAnalysis.status === 'pending' ? 'Pending Specialist Integration' : 'Completed'}
+                </span>
               </div>
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 {report.competitorAnalysis.content}
               </p>
-              <div className="space-y-2.5">
-                {report.competitorAnalysis.directCompetitors.map((c, i) => (
-                  <div key={i} className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-semibold text-slate-900 dark:text-slate-200">{c.name}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 font-medium">
-                        {c.pricePoint}
-                      </span>
+              {report.competitorAnalysis.status === 'pending' ? (
+                <div className="p-4 rounded-xl border border-dashed border-amber-300 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 text-xs text-amber-800 dark:text-amber-300">
+                  <p className="font-semibold mb-1">Competitor Screening Queued in Waiting State</p>
+                  <p>Direct and indirect incumbent audits, pricing benchmarks, and competitive positioning will be populated when the Research Agent is triggered.</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {report.competitorAnalysis.directCompetitors.map((c, i) => (
+                    <div key={i} className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-semibold text-slate-900 dark:text-slate-200">{c.name}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 font-medium">
+                          {c.pricePoint}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                        <div><strong className="text-emerald-600 dark:text-emerald-400">Strengths:</strong> {c.strengths}</div>
+                        <div><strong className="text-rose-600 dark:text-rose-400">Weaknesses:</strong> {c.weaknesses}</div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400">
-                      <div><strong className="text-emerald-600 dark:text-emerald-400">Strengths:</strong> {c.strengths}</div>
-                      <div><strong className="text-rose-600 dark:text-rose-400">Weaknesses:</strong> {c.weaknesses}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
